@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:offline-art-history:catalog:v1",
+  "title": "Offline art-history catalog metadata, version 1",
+  "description": "Structural schema. Run the offline validator for chronological relationships, locality, reference integrity and complete locale coverage.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "catalog_state", "default_locale", "supported_locales", "periods", "movements", "artworks"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "catalog_state": {"enum": ["draft", "release"]},
+    "default_locale": {"$ref": "#/$defs/locale"},
+    "supported_locales": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/locale"}
+    },
+    "periods": {"type": "array", "items": {"$ref": "#/$defs/period"}},
+    "movements": {"type": "array", "items": {"$ref": "#/$defs/movement"}},
+    "artworks": {"type": "array", "items": {"$ref": "#/$defs/artwork"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"},
+    "locale": {"type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$"},
+    "year": {"type": "integer", "minimum": -10000, "maximum": 3000},
+    "labels": {
+      "type": "object", "minProperties": 1,
+      "patternProperties": {"^[a-z]{2}(-[A-Z]{2})?$": {"type": "string", "minLength": 1}},
+      "additionalProperties": false
+    },
+    "accessibleText": {
+      "type": "object", "minProperties": 1,
+      "patternProperties": {"^[a-z]{2}(-[A-Z]{2})?$": {"type": "string", "minLength": 8}},
+      "additionalProperties": false
+    },
+    "period": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "start_year", "end_year"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "label": {"$ref": "#/$defs/labels"},
+        "start_year": {"$ref": "#/$defs/year"}, "end_year": {"$ref": "#/$defs/year"}
+      }
+    },
+    "movement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "start_year", "end_year", "period_id"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "label": {"$ref": "#/$defs/labels"},
+        "start_year": {"$ref": "#/$defs/year"}, "end_year": {"$ref": "#/$defs/year"},
+        "period_id": {"$ref": "#/$defs/id"}
+      }
+    },
+    "rightsOwnerOriginal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "origin_note"],
+      "properties": {
+        "status": {"const": "owner_original"},
+        "origin_note": {"type": "string", "minLength": 15}
+      }
+    },
+    "rightsPublicDomain": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "source_url", "rights_evidence_url", "reviewed_on", "jurisdiction", "basis"],
+      "properties": {
+        "status": {"const": "public_domain"},
+        "source_url": {"type": "string", "pattern": "^https://"},
+        "rights_evidence_url": {"type": "string", "pattern": "^https://"},
+        "reviewed_on": {"type": "string", "format": "date"},
+        "jurisdiction": {"type": "string", "minLength": 2},
+        "basis": {"enum": ["term_expired", "government_work", "documented_exception"]}
+      }
+    },
+    "rightsCC0": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "source_url", "rights_evidence_url", "reviewed_on", "licence_id", "licence_url"],
+      "properties": {
+        "status": {"const": "cc0"},
+        "source_url": {"type": "string", "pattern": "^https://"},
+        "rights_evidence_url": {"type": "string", "pattern": "^https://"},
+        "reviewed_on": {"type": "string", "format": "date"},
+        "licence_id": {"const": "CC0-1.0"},
+        "licence_url": {"type": "string", "pattern": "^https://"}
+      }
+    },
+    "image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["src", "alt", "caption", "width", "height", "rights"],
+      "properties": {
+        "src": {"type": "string", "minLength": 1},
+        "alt": {"$ref": "#/$defs/accessibleText"},
+        "caption": {"$ref": "#/$defs/accessibleText"},
+        "width": {"type": "integer", "minimum": 1, "maximum": 50000},
+        "height": {"type": "integer", "minimum": 1, "maximum": 50000},
+        "rights": {"oneOf": [
+          {"$ref": "#/$defs/rightsOwnerOriginal"},
+          {"$ref": "#/$defs/rightsPublicDomain"},
+          {"$ref": "#/$defs/rightsCC0"}
+        ]}
+      }
+    },
+    "artwork": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "title", "start_year", "end_year", "period_id", "movement_id", "image"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "title": {"$ref": "#/$defs/labels"},
+        "start_year": {"$ref": "#/$defs/year"},
+        "end_year": {"$ref": "#/$defs/year"},
+        "period_id": {"$ref": "#/$defs/id"},
+        "movement_id": {"$ref": "#/$defs/id"},
+        "image": {"$ref": "#/$defs/image"}
+      }
+    }
+  }
+}
